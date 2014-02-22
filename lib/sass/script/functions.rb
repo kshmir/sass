@@ -2237,6 +2237,12 @@ module Sass::Script
     declare :random, []
     declare :random, [:limit]
 
+    def selector_nest(parent, child)
+      parent = parse_selector(parent, :parent)
+      child = parse_selector(child, :child)
+      child.resolve_parent_refs(parent).to_sass_script
+    end
+
     private
 
     # This method implements the pattern of transforming a numeric value into

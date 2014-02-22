@@ -121,7 +121,43 @@ module Sass::Script::Value
     end
     alias_method :identifier, :unquoted_string
 
+    def parse_selector(value, name = nil)
+      str = normalize_selector(value, name)
+      frame = environment.stack.frames.last
+      line = frame ? frame.line : 1
+      Sass::SCSS::StaticParser.new(str, options[:filename], line).parse_selector
+    end
+
     private
+
+    def normalize_selector(value, name)
+      if (str = selector_to_str(value))
+        return str
+      end
+
+      err = "#{value.inspect} is not a valid selector, it must be a string or list of strings"
+      err = "$#{name.to_s.gsub('_', '-')}: #{err}" if name
+      raise ArgumentError.new(err)
+    end
+
+    def selector_to_str(value)
+      return value.value if value.is_a?(Sass::Script::String)
+      return unless value.is_a?(Sass::Script::List)
+
+      if value.separator == :comma
+        return value.to_a.map do |complex|
+          next complex.value if complex.is_a?(Sass::Script::String)
+          return unless complex.is_a?(Sass::Script::List) && complex.separator == :space
+          return unless (str = selector_to_str(complex))
+          str
+        end.join(', ')
+      end
+
+      value.to_a.map do |compound|
+        return unless compound.is_a?(Sass::Script::String)
+        compound.value
+      end.join(' ')
+    end
 
     # @private
     VALID_UNIT = /#{Sass::SCSS::RX::NMSTART}#{Sass::SCSS::RX::NMCHAR}|%*/
