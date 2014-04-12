@@ -122,5 +122,5 @@ module Sass
   # A string representing the version of Sass.
   # A more fine-grained representation is available from Sass.version.
   # @api public
-  VERSION = version[:string] unless defined?(Sass::VERSION)
+  VERSION = "3.2.0"
 end
